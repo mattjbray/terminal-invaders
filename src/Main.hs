@@ -42,12 +42,25 @@ inputToGamechan vty gameChan = forever $ do
   writeChan gameChan (toGameEvent e)
 
 
+-- The main loop - render and update.
 loop :: Vty -> Chan GameEvent -> StateT World IO ()
 loop vty gameChan = do
+  renderS vty
+  action <- updateS gameChan
+  case action of GCQuit -> liftIO $ shutdown vty
+                 _      -> loop vty gameChan
+
+
+-- Render the World to the Vty.
+renderS :: Vty -> StateT World IO ()
+renderS vty = do
   world <- get
   let pic = picForImage (render world)
   liftIO $ update vty pic
+
+
+-- Wait on a GameEvent and update the World.
+updateS :: Chan GameEvent -> StateT World IO GameControlEvent
+updateS gameChan = do
   ge <- liftIO $ readChan gameChan
-  action <- hoistState $ gameLoop ge
-  case action of GCQuit -> liftIO $ shutdown vty
-                 _      -> loop vty gameChan
+  hoistState $ gameLoop ge
