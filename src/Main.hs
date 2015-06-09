@@ -47,9 +47,7 @@ initInputs vty gameChan =
 
 -- Map Vty input events to GameEvents on the game channel.
 inputToGamechan :: Vty -> Chan GameEvent -> IO ()
-inputToGamechan vty gameChan = forever $ do
-  e <- nextEvent vty
-  writeChan gameChan (toGameEvent e)
+inputToGamechan vty gameChan = forever $ nextEvent vty >>= writeChan gameChan . toGameEvent
 
 
 -- The main loop - render and update.
@@ -68,6 +66,4 @@ renderS vty = liftM (update vty . picForImage . render) get >>= liftIO
 
 -- Wait on a GameEvent and update the World.
 updateS :: Chan GameEvent -> StateT World IO GameControlEvent
-updateS gameChan = do
-  ge <- liftIO $ readChan gameChan
-  hoistState $ stepWorld ge
+updateS gameChan = (liftIO . readChan) gameChan >>= hoistState . stepWorld
