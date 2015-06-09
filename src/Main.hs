@@ -5,7 +5,7 @@ import Control.Concurrent.Chan (Chan
                                ,writeChan)
 import Control.Monad (forever)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.State (State, StateT, evalStateT, get)
+import Control.Monad.State (StateT, evalStateT, get)
 import Data.Default (def)
 import Graphics.Vty (Vty
                     ,mkVty

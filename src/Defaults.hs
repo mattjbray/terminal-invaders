@@ -11,7 +11,7 @@ instance Default World where
   def = World { _worldWidth=100, _worldHeight=20, _worldPlayer=def }
 
 instance Default Player where
-  def = Player { _playerPosition=(floor ((fromIntegral width) / 2.0), height) }
+  def = Player { _playerPosition=(floor (fromIntegral width / 2.0), height) }
     where
       world = def :: World
       height = world ^. worldHeight

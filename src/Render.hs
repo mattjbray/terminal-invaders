@@ -5,14 +5,8 @@ import Control.Lens ((^.))
 import Graphics.Vty (Image
                     ,char
                     ,backgroundFill
-                    ,blue
                     ,defAttr
-                    ,green
                     ,horizCat
-                    ,pad
-                    ,string
-                    ,withBackColor
-                    ,withForeColor
                     ,vertCat
                     ,(<|>)
                     ,(<->))

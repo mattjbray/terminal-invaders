@@ -8,9 +8,7 @@ where
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Chan (Chan
                                ,writeChan)
-import Control.Lens ((^.)
-                    ,(%~)
-                    ,(%=)
+import Control.Lens ((%=)
                     ,_1
                     ,_2
                     ,use)
@@ -18,7 +16,7 @@ import Control.Monad (forever)
 import Control.Monad.State (State)
 import Graphics.Vty (Event(EvKey)
                     ,Key(KChar,KEsc,KLeft,KRight,KUp,KDown))
-import System.Random (Random, random, randomR, randomIO)
+import System.Random (Random, random, randomR)
 
 import World (World, worldPlayer, worldWidth, worldHeight)
 import Player (playerPosition)

@@ -13,8 +13,6 @@ module World (
 where
 
 import Control.Lens (makeLenses)
-import Data.Default (Default
-                    ,def)
 
 import Player (Player)
 
