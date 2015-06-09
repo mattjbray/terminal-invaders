@@ -1,8 +1,9 @@
 FROM haskell:7.10
 
-RUN cabal update
-RUN cabal install -j vty==5.2.9 lens random
-
-ADD . /terminal-invaders
 WORKDIR /terminal-invaders
-CMD /bin/bash -c "cd src && runhaskell Main.hs"
+ADD ./terminal-invaders.cabal ./
+RUN mkdir -p /root/.cabal/logs
+RUN cabal update && cabal install -j --only-dependencies
+ADD . ./
+RUN cabal install -j
+CMD ./dist/build/terminal-invaders/terminal-invaders
