@@ -34,14 +34,13 @@ instance Random Direction where
     (r, g') -> (toEnum r, g')
 
 data GameControlEvent = GCContinue | GCQuit
-data GameEvent = Quit | Continue | MovePlayer Direction
+data GameEvent = Quit | Tick | Pass | MovePlayer Direction
 
 
 tick :: Chan GameEvent -> IO ()
 tick gameChan = forever $ do
   threadDelay $ 10 ^ 5
-  direction <- randomIO
-  writeChan gameChan (MovePlayer direction)
+  writeChan gameChan Tick
 
 
 toGameEvent :: Event -> GameEvent
@@ -55,7 +54,7 @@ toGameEvent (EvKey KUp         _) = MovePlayer DUp
 toGameEvent (EvKey (KChar 'k') _) = MovePlayer DUp
 toGameEvent (EvKey KDown       _) = MovePlayer DDown
 toGameEvent (EvKey (KChar 'j') _) = MovePlayer DDown
-toGameEvent _                     = Continue
+toGameEvent _                     = Pass
 
 
 movePlayer :: Direction -> State World ()
@@ -70,5 +69,6 @@ movePlayer DDown   = do
 
 gameLoop :: GameEvent -> State World GameControlEvent
 gameLoop Quit           = return GCQuit
-gameLoop Continue       = return GCContinue
+gameLoop Pass           = return GCContinue
+gameLoop Tick           = return GCContinue
 gameLoop (MovePlayer d) = movePlayer d >> return GCContinue
