@@ -2,7 +2,7 @@
 let
   inherit (nixpkgs) pkgs;
   ghc = pkgs.haskell.packages.${compiler}.ghcWithPackages (ps: with ps; [
-          lens vty
+          lens random vty
         ]);
 in
 pkgs.stdenv.mkDerivation {
