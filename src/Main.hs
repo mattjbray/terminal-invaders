@@ -4,7 +4,8 @@ import Control.Concurrent.Chan (Chan
                                ,readChan
                                ,writeChan)
 import Control.Monad (forever)
-import Control.Monad.State (runState)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.State (State, StateT, evalStateT, get)
 import Data.Default (def)
 import Graphics.Vty (Vty
                     ,mkVty
@@ -21,6 +22,7 @@ import Update (GameControlEvent(GCQuit)
               ,gameLoop
               ,tick
               ,toGameEvent)
+import Utils (hoistState)
 
 main :: IO ()
 main = do
@@ -30,7 +32,7 @@ main = do
   forkIO (tick gameChan)
   -- thread to wait on Vty events
   forkIO (inputToGamechan vty gameChan)
-  loop vty gameChan def
+  evalStateT (loop vty gameChan) def
 
 
 -- map Vty input events to GameEvents on the game channel
@@ -40,11 +42,12 @@ inputToGamechan vty gameChan = forever $ do
   writeChan gameChan (toGameEvent e)
 
 
-loop :: Vty -> Chan GameEvent -> World -> IO ()
-loop vty gameChan world = do
+loop :: Vty -> Chan GameEvent -> StateT World IO ()
+loop vty gameChan = do
+  world <- get
   let pic = picForImage (render world)
-  update vty pic
-  ge <- readChan gameChan
-  let (action, newWorld) = runState (gameLoop ge) world
-  case action of GCQuit -> shutdown vty
-                 _      -> loop vty gameChan newWorld
+  liftIO $ update vty pic
+  ge <- liftIO $ readChan gameChan
+  action <- hoistState $ gameLoop ge
+  case action of GCQuit -> liftIO $ shutdown vty
+                 _      -> loop vty gameChan
