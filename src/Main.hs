@@ -1,3 +1,5 @@
+module Main where
+
 import Control.Concurrent (forkIO)
 import Control.Concurrent.Chan (Chan
                                ,newChan
