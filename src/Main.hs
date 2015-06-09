@@ -5,7 +5,7 @@ import Control.Concurrent.Chan (Chan
                                ,newChan
                                ,readChan
                                ,writeChan)
-import Control.Monad (forever)
+import Control.Monad (forever, liftM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.State (StateT, evalStateT, get)
 import Data.Default (def)
@@ -63,10 +63,7 @@ loop vty gameChan = do
 
 -- Render the World to the Vty.
 renderS :: Vty -> StateT World IO ()
-renderS vty = do
-  world <- get
-  let pic = picForImage (render world)
-  liftIO $ update vty pic
+renderS vty = liftM (update vty . picForImage . render) get >>= liftIO
 
 
 -- Wait on a GameEvent and update the World.
