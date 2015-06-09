@@ -19,7 +19,7 @@ import Render (render)
 import Defaults ()
 import Update (GameControlEvent(GCQuit)
               ,GameEvent
-              ,gameLoop
+              ,stepWorld
               ,tick
               ,toGameEvent)
 import Utils (hoistState)
@@ -63,4 +63,4 @@ renderS vty = do
 updateS :: Chan GameEvent -> StateT World IO GameControlEvent
 updateS gameChan = do
   ge <- liftIO $ readChan gameChan
-  hoistState $ gameLoop ge
+  hoistState $ stepWorld ge

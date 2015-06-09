@@ -1,6 +1,6 @@
 module Update (GameControlEvent(GCQuit)
               ,GameEvent
-              ,gameLoop
+              ,stepWorld
               ,tick
               ,toGameEvent)
 where
@@ -65,8 +65,9 @@ movePlayer DDown   = do
   maxHeight <- use worldHeight
   worldPlayer . playerPosition . _2 %= (\y -> min (y+1) maxHeight)
 
-gameLoop :: GameEvent -> State World GameControlEvent
-gameLoop Quit           = return GCQuit
-gameLoop Pass           = return GCContinue
-gameLoop Tick           = return GCContinue
-gameLoop (MovePlayer d) = movePlayer d >> return GCContinue
+
+stepWorld :: GameEvent -> State World GameControlEvent
+stepWorld Quit           = return GCQuit
+stepWorld Pass           = return GCContinue
+stepWorld Tick           = return GCContinue
+stepWorld (MovePlayer d) = movePlayer d >> return GCContinue
