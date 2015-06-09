@@ -6,9 +6,8 @@ A Haskell experiment with Vty, Lens and State.
 ### Nix
 
 ```
-nix-shell
-cd src
-runhaskell Main.hs
+NIXPKGS_ALLOW_UNFREE=1 nix-shell
+cabal run
 ```
 
 ### Docker
@@ -17,7 +16,3 @@ runhaskell Main.hs
 docker build -t terminal-invaders .
 docker run -it --rm terminal-invaders
 ```
-
-## TODO
-
-cabal init
