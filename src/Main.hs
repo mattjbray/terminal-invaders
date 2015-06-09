@@ -29,15 +29,23 @@ import Utils (hoistState)
 main :: IO ()
 main = do
   vty <- mkVty def
+  -- Channel to receive events from other threads.
   gameChan <- newChan
-  -- thread to tick the game
-  forkIO (tick gameChan)
-  -- thread to wait on Vty events
-  forkIO (inputToGamechan vty gameChan)
+  -- Initialize threads to provide GameEvents.
+  initInputs vty gameChan
+  -- Kick off the main loop.
   evalStateT (loop vty gameChan) def
 
 
--- map Vty input events to GameEvents on the game channel
+initInputs :: Vty -> Chan GameEvent -> IO ()
+initInputs vty gameChan =
+  -- thread to tick the game
+  forkIO (tick gameChan) >>
+  -- thread to wait on Vty events
+  forkIO (inputToGamechan vty gameChan) >> return ()
+
+
+-- Map Vty input events to GameEvents on the game channel.
 inputToGamechan :: Vty -> Chan GameEvent -> IO ()
 inputToGamechan vty gameChan = forever $ do
   e <- nextEvent vty
