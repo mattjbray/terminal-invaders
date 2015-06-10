@@ -56,14 +56,14 @@ toGameEvent _                     = Pass
 
 
 movePlayer :: Direction -> State World ()
-movePlayer DLeft   = worldPlayer . playerPosition . _1 %= (\x -> max (x-1) 1)
-movePlayer DUp     = worldPlayer . playerPosition . _2 %= (\y -> max (y-1) 1)
+movePlayer DLeft   = worldPlayer . playerPosition . _1 %= (\x -> max (x-1) 0)
+movePlayer DUp     = worldPlayer . playerPosition . _2 %= (\y -> max (y-1) 0)
 movePlayer DRight  = do
   maxWidth <- use worldWidth
-  worldPlayer . playerPosition . _1 %= (\x -> min (x+1) maxWidth)
+  worldPlayer . playerPosition . _1 %= (\x -> min (x+1) (maxWidth - 1))
 movePlayer DDown   = do
   maxHeight <- use worldHeight
-  worldPlayer . playerPosition . _2 %= (\y -> min (y+1) maxHeight)
+  worldPlayer . playerPosition . _2 %= (\y -> min (y+1) (maxHeight - 1))
 
 
 stepWorld :: GameEvent -> State World GameControlEvent

@@ -2,6 +2,7 @@ module Render (render)
 where
 
 import Control.Lens ((^.))
+import qualified Data.Map as M
 import Graphics.Vty (Image
                     ,char
                     ,backgroundFill
@@ -11,21 +12,24 @@ import Graphics.Vty (Image
                     ,(<|>)
                     ,(<->))
 
-import World (World, worldPlayer, worldWidth, worldHeight)
+import World (World, worldPlayer, worldWidth, worldHeight, worldEnemies)
 import Player (Player, playerPosition)
+import Enemy (Enemy, enemyPosition)
+
 
 class Render a where
   render :: a -> Image
+
 
 instance Render World where
   render world = (topLeft <|> hEdge <|> topRight) <->
                  (vEdge <|> game <|> vEdge) <->
                  (bottomLeft <|> hEdge <|> bottomRight)
     where
-      game = let (x,y) = world ^. worldPlayer . playerPosition in
-               backgroundFill (x - 1) 1 <|>
-               (backgroundFill 1 (y - 1) <-> render (world ^. worldPlayer)) <|>
-               backgroundFill (world ^. worldWidth - x) 1
+      game = vertCat [ horizCat [ renderPixel (x,y) | x <- [0..world ^. worldWidth - 1] ] | y <- [0..world ^. worldHeight - 1] ]
+      renderPixel pos = case M.lookup pos (locate world) of
+                          (Just img) -> head img
+                          Nothing    -> backgroundFill 1 1
       topLeft     = char defAttr '┌'
       topRight    = char defAttr '┐'
       bottomLeft  = char defAttr '└'
@@ -33,5 +37,23 @@ instance Render World where
       hEdge = horizCat $ replicate (world ^. worldWidth)  (char defAttr '─')
       vEdge = vertCat  $ replicate (world ^. worldHeight) (char defAttr '│')
 
+
+-- From the World, generate a list of Images to be rendered at each position.
+locate :: World -> M.Map (Int, Int) [Image]
+locate world = M.alter insertPlayer (world ^. worldPlayer . playerPosition) enemyLocations
+  where
+    insertPlayer :: Maybe [Image] -> Maybe [Image]
+    insertPlayer Nothing = Just [render (world ^. worldPlayer)]
+    -- TODO: Find a better way of rendering two objects in one place
+    insertPlayer (Just imgs) = Just $ char defAttr 'ô' : imgs
+    enemyLocations = foldl (\locations enemy -> M.insertWith (++) (enemy ^. enemyPosition) [render enemy] locations)
+                           M.empty
+                           (world ^. worldEnemies)
+
+
 instance Render Player where
   render player = char defAttr '^'
+
+
+instance Render Enemy where
+  render enemy = char defAttr 'o'
