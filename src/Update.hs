@@ -9,17 +9,21 @@ import Control.Concurrent (threadDelay)
 import Control.Concurrent.Chan (Chan
                                ,writeChan)
 import Control.Lens ((%=)
+                    ,(*=)
                     ,_1
                     ,_2
+                    ,traversed
+                    ,zoom
                     ,use)
-import Control.Monad (forever)
+import Control.Monad (forever,when)
 import Control.Monad.State (State)
 import Graphics.Vty (Event(EvKey)
                     ,Key(KChar,KEsc,KLeft,KRight,KUp,KDown))
 import System.Random (Random, random, randomR)
 
-import World (World, worldPlayer, worldWidth, worldHeight)
+import World (World, worldPlayer, worldWidth, worldHeight, worldEnemies)
 import Player (playerPosition)
+import Enemy (Enemy,enemyPosition, enemyVel)
 
 
 data Direction = DLeft | DRight | DUp | DDown
@@ -69,5 +73,24 @@ movePlayer DDown   = do
 stepWorld :: GameEvent -> State World GameControlEvent
 stepWorld Quit           = return GCQuit
 stepWorld Pass           = return GCContinue
-stepWorld Tick           = return GCContinue
+stepWorld Tick           = moveEnemies >> return GCContinue
 stepWorld (MovePlayer d) = movePlayer d >> return GCContinue
+
+
+moveEnemies :: State World ()
+moveEnemies = do
+  height <- use worldHeight
+  width <- use worldWidth
+  zoom (worldEnemies.traversed) $ do
+    bounceEnemy width height
+    (dx,dy) <- use enemyVel
+    enemyPosition %= (\(x,y) -> (x+dx, y+dy))
+
+
+bounceEnemy :: Int -> Int -> State Enemy ()
+bounceEnemy width height = do
+    (dx,dy) <- use enemyVel
+    (x,y)   <- use enemyPosition
+    let (testX, testY) = (x+dx,y+dy)
+    when (testX < 0 || testX >= width)  $ enemyVel . _1 *= -1
+    when (testY < 0 || testY >= height) $ enemyVel . _2 *= -1
