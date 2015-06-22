@@ -12,7 +12,8 @@ import Graphics.Vty (Image
                     ,(<|>)
                     ,(<->))
 
-import World (World, worldPlayer, worldWidth, worldHeight, worldEnemies)
+import Bullet (Bullet, bulletPosition)
+import World (World, worldBullets, worldPlayer, worldWidth, worldHeight, worldEnemies)
 import Player (Player, playerPosition)
 import Enemy (Enemy, enemyPosition)
 
@@ -40,7 +41,7 @@ instance Render World where
 
 -- From the World, generate a list of Images to be rendered at each position.
 locate :: World -> M.Map (Int, Int) [Image]
-locate world = M.alter insertPlayer (world ^. worldPlayer . playerPosition) enemyLocations
+locate world = M.alter insertPlayer (world ^. worldPlayer . playerPosition) (M.union bulletLocations enemyLocations)
   where
     insertPlayer :: Maybe [Image] -> Maybe [Image]
     insertPlayer Nothing = Just [render (world ^. worldPlayer)]
@@ -49,6 +50,9 @@ locate world = M.alter insertPlayer (world ^. worldPlayer . playerPosition) enem
     enemyLocations = foldl (\locations enemy -> M.insertWith (++) (enemy ^. enemyPosition) [render enemy] locations)
                            M.empty
                            (world ^. worldEnemies)
+    bulletLocations = foldl (\locations bullet -> M.insertWith (++) (bullet ^. bulletPosition) [render bullet] locations)
+                           M.empty
+                           (world ^. worldBullets)
 
 
 instance Render Player where
@@ -57,3 +61,7 @@ instance Render Player where
 
 instance Render Enemy where
   render enemy = char defAttr 'o'
+
+
+instance Render Bullet where
+  render bullet = char defAttr '.'

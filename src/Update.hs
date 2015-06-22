@@ -10,21 +10,25 @@ import Control.Concurrent.Chan (Chan
                                ,writeChan)
 import Control.Lens ((%=)
                     ,(*=)
+                    ,(^.)
                     ,_1
                     ,_2
                     ,traversed
+                    ,view
                     ,zoom
                     ,use)
-import Control.Monad (forever,when)
-import Control.Monad.State (State, gets)
+import Control.Monad (forever,liftM,when)
+import Control.Monad.State (State, get, gets)
+import qualified Data.Set as Set
 import Graphics.Vty (Event(EvKey)
                     ,Key(KChar,KEsc,KLeft,KRight,KUp,KDown))
 import System.Random (Random, random, randomR)
 
-import World (World, worldPlayer, worldWidth, worldHeight, worldEnemies)
+import World (World, inWorld, worldPlayer, worldWidth, worldHeight, worldEnemies, worldBullets)
+import Bullet (Bullet(Bullet), bulletVel, bulletPosition)
 import Player (playerPosition)
 import Enemy (Enemy,enemyPosition, enemyVel)
-import Collisions (collided)
+import Collisions (playerCollidedWithEnemy)
 
 
 data Direction = DLeft | DRight | DUp | DDown
@@ -74,12 +78,36 @@ movePlayer DDown   = do
 stepWorld :: GameEvent -> State World GameControlEvent
 stepWorld Quit           = return GCQuit
 stepWorld Pass           = return GCContinue
-stepWorld Tick           = moveEnemies >> checkCollisions
+stepWorld Tick           = moveBullets >> moveEnemies >> spawnBullets >> checkCollisions
 stepWorld (MovePlayer d) = movePlayer d >> checkCollisions
 
 
 checkCollisions :: State World GameControlEvent
-checkCollisions = gets (\w -> if collided w then GCQuit else GCContinue)
+checkCollisions = do
+  -- remove any enemies and bullets that have collided
+  bPositions <- liftM (Set.fromList . map (view bulletPosition)) $ use worldBullets
+  ePositions <- liftM (Set.fromList . map (view enemyPosition))  $ use worldEnemies
+  worldEnemies %= (\es -> [e | e <- es, (e^.enemyPosition)  `Set.notMember` bPositions])
+  worldBullets %= (\bs -> [b | b <- bs, (b^.bulletPosition) `Set.notMember` ePositions])
+  -- quit if the player met an enemy
+  gets (\w -> if playerCollidedWithEnemy w then GCQuit else GCContinue)
+
+
+spawnBullets :: State World ()
+spawnBullets = do
+  (x,y) <- use (worldPlayer.playerPosition)
+  worldBullets %= (:) (Bullet (x,y-1) (0,-1))
+
+
+moveBullets :: State World ()
+moveBullets = do
+  height <- use worldHeight
+  width <- use worldWidth
+  zoom (worldBullets.traversed) $ do
+    (dx,dy) <- use bulletVel
+    bulletPosition %= (\(x,y) -> (x+dx, y+dy))
+  world <- get
+  worldBullets %= (\bs -> [b | b <- bs, inWorld world (b ^. bulletPosition)])
 
 
 moveEnemies :: State World ()
