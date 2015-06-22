@@ -16,7 +16,7 @@ import Control.Lens ((%=)
                     ,zoom
                     ,use)
 import Control.Monad (forever,when)
-import Control.Monad.State (State)
+import Control.Monad.State (State, gets)
 import Graphics.Vty (Event(EvKey)
                     ,Key(KChar,KEsc,KLeft,KRight,KUp,KDown))
 import System.Random (Random, random, randomR)
@@ -24,6 +24,7 @@ import System.Random (Random, random, randomR)
 import World (World, worldPlayer, worldWidth, worldHeight, worldEnemies)
 import Player (playerPosition)
 import Enemy (Enemy,enemyPosition, enemyVel)
+import Collisions (collided)
 
 
 data Direction = DLeft | DRight | DUp | DDown
@@ -73,8 +74,12 @@ movePlayer DDown   = do
 stepWorld :: GameEvent -> State World GameControlEvent
 stepWorld Quit           = return GCQuit
 stepWorld Pass           = return GCContinue
-stepWorld Tick           = moveEnemies >> return GCContinue
-stepWorld (MovePlayer d) = movePlayer d >> return GCContinue
+stepWorld Tick           = moveEnemies >> checkCollisions
+stepWorld (MovePlayer d) = movePlayer d >> checkCollisions
+
+
+checkCollisions :: State World GameControlEvent
+checkCollisions = gets (\w -> if collided w then GCQuit else GCContinue)
 
 
 moveEnemies :: State World ()
