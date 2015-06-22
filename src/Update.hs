@@ -11,6 +11,7 @@ import Control.Concurrent.Chan (Chan
 import Control.Lens ((%=)
                     ,(*=)
                     ,(^.)
+                    ,(.=)
                     ,_1
                     ,_2
                     ,traversed
@@ -24,10 +25,10 @@ import Graphics.Vty (Event(EvKey)
                     ,Key(KChar,KEsc,KLeft,KRight,KUp,KDown))
 import System.Random (Random, random, randomR)
 
-import World (World, inWorld, worldPlayer, worldWidth, worldHeight, worldEnemies, worldBullets)
+import World (World, inWorld, worldPlayer, worldWidth, worldHeight, worldEnemies, worldBullets, worldStdGen)
 import Bullet (Bullet(Bullet), bulletVel, bulletPosition)
 import Player (playerPosition)
-import Enemy (Enemy,enemyPosition, enemyVel)
+import Enemy (Enemy(Enemy),enemyPosition, enemyVel)
 import Collisions (playerCollidedWithEnemy)
 
 
@@ -78,7 +79,14 @@ movePlayer DDown   = do
 stepWorld :: GameEvent -> State World GameControlEvent
 stepWorld Quit           = return GCQuit
 stepWorld Pass           = return GCContinue
-stepWorld Tick           = moveBullets >> moveEnemies >> spawnBullets >> checkCollisions
+stepWorld Tick           = do moveBullets
+                              checkCollisions
+                              moveEnemies
+                              checkCollisions
+                              spawnEnemy
+                              checkCollisions
+                              spawnBullets
+                              checkCollisions
 stepWorld (MovePlayer d) = movePlayer d >> checkCollisions
 
 
@@ -98,6 +106,16 @@ spawnBullets = do
   (x,y) <- use (worldPlayer.playerPosition)
   worldBullets %= (:) (Bullet (x,y-1) (0,-1))
 
+spawnEnemy :: State World ()
+spawnEnemy = do
+  g <- use worldStdGen
+  let (p, g') = randomR (0 :: Int, 100) g
+  worldStdGen .= g'
+  when (p>70) $ do
+    width <- use worldWidth
+    let (x, g'') = randomR (0, width) g'
+    worldStdGen .= g''
+    worldEnemies %= (:) (Enemy (x, 0) (0,1))
 
 moveBullets :: State World ()
 moveBullets = do

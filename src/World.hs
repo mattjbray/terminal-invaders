@@ -3,6 +3,8 @@
 module World (
   World(World)
   , inWorld
+  , _worldStdGen
+  , worldStdGen
   , _worldBullets
   , worldBullets
   , _worldPlayer
@@ -18,6 +20,7 @@ module World (
 where
 
 import Control.Lens ((^.), makeLenses)
+import System.Random (StdGen)
 
 import Bullet (Bullet)
 import Enemy (Enemy)
@@ -28,6 +31,7 @@ data World = World { _worldWidth :: Int
                    , _worldPlayer :: Player
                    , _worldEnemies :: [Enemy]
                    , _worldBullets :: [Bullet]
+                   , _worldStdGen :: StdGen
                    }
 
 makeLenses ''World

@@ -5,6 +5,7 @@ import Control.Concurrent.Chan (Chan
                                ,newChan
                                ,readChan
                                ,writeChan)
+import Control.Lens ((.=))
 import Control.Monad (forever)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.State (StateT, evalStateT, gets)
@@ -15,8 +16,9 @@ import Graphics.Vty (Vty
                     ,picForImage
                     ,shutdown
                     ,update)
+import System.Random (newStdGen)
 
-import World (World)
+import World (World, worldStdGen)
 import Render (render)
 import Defaults ()
 import Update (GameControlEvent(GCQuit)
@@ -53,6 +55,8 @@ inputToGamechan vty gameChan = forever $ nextEvent vty >>= writeChan gameChan . 
 -- The main loop - render and update.
 loop :: Vty -> Chan GameEvent -> StateT World IO ()
 loop vty gameChan = do
+  g <- liftIO newStdGen
+  worldStdGen .= g
   renderS vty
   action <- updateS gameChan
   case action of GCQuit -> liftIO $ shutdown vty
