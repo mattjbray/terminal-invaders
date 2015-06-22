@@ -8,12 +8,13 @@ import Graphics.Vty (Image
                     ,backgroundFill
                     ,defAttr
                     ,horizCat
+                    ,string
                     ,vertCat
                     ,(<|>)
                     ,(<->))
 
 import Bullet (Bullet, bulletPosition)
-import World (World, worldBullets, worldPlayer, worldWidth, worldHeight, worldEnemies)
+import World (World, worldBullets, worldPlayer, worldWidth, worldHeight, worldEnemies, worldScore)
 import Player (Player, playerPosition)
 import Enemy (Enemy, enemyPosition)
 
@@ -25,7 +26,8 @@ class Render a where
 instance Render World where
   render world = (topLeft <|> hEdge <|> topRight) <->
                  (vEdge <|> game <|> vEdge) <->
-                 (bottomLeft <|> hEdge <|> bottomRight)
+                 (bottomLeft <|> hEdge <|> bottomRight) <->
+                 score
     where
       game = vertCat [ horizCat [ renderPixel (x,y) | x <- [0..world ^. worldWidth - 1] ] | y <- [0..world ^. worldHeight - 1] ]
       renderPixel pos = case M.lookup pos (locate world) of
@@ -37,6 +39,7 @@ instance Render World where
       bottomRight = char defAttr '┘'
       hEdge = horizCat $ replicate (world ^. worldWidth)  (char defAttr '─')
       vEdge = vertCat  $ replicate (world ^. worldHeight) (char defAttr '│')
+      score = string defAttr $ "Score: " ++ show (world ^. worldScore)
 
 
 -- From the World, generate a list of Images to be rendered at each position.

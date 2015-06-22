@@ -5,11 +5,11 @@ import Data.Default (Default
                     ,def)
 import System.Random (mkStdGen)
 
-import World (World(World), _worldWidth, _worldHeight, worldWidth, worldHeight, _worldPlayer, _worldEnemies, _worldBullets, _worldStdGen)
+import World (World(World), _worldWidth, _worldHeight, worldWidth, worldHeight, _worldPlayer, _worldEnemies, _worldBullets, _worldStdGen, _worldScore)
 import Player (Player(Player), _playerPosition)
 
 instance Default World where
-  def = World { _worldWidth=100, _worldHeight=20, _worldPlayer=def, _worldEnemies=[], _worldBullets=[], _worldStdGen=mkStdGen 0 }
+  def = World { _worldWidth=100, _worldHeight=20, _worldPlayer=def, _worldEnemies=[], _worldBullets=[], _worldStdGen=mkStdGen 0, _worldScore=0 }
 
 instance Default Player where
   def = Player { _playerPosition=(floor (fromIntegral (width - 1) / 2.0), height - 1) }

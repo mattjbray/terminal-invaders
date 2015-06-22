@@ -9,6 +9,7 @@ import Control.Concurrent (threadDelay)
 import Control.Concurrent.Chan (Chan
                                ,writeChan)
 import Control.Lens ((%=)
+                    ,(+=)
                     ,(*=)
                     ,(^.)
                     ,(.=)
@@ -25,7 +26,7 @@ import Graphics.Vty (Event(EvKey)
                     ,Key(KChar,KEsc,KLeft,KRight,KUp,KDown))
 import System.Random (Random, random, randomR)
 
-import World (World, inWorld, worldPlayer, worldWidth, worldHeight, worldEnemies, worldBullets, worldStdGen)
+import World (World, inWorld, worldPlayer, worldWidth, worldHeight, worldEnemies, worldBullets, worldStdGen, worldScore)
 import Bullet (Bullet(Bullet), bulletVel, bulletPosition)
 import Player (playerPosition)
 import Enemy (Enemy(Enemy),enemyPosition, enemyVel)
@@ -93,25 +94,32 @@ stepWorld (MovePlayer d) = movePlayer d >> checkCollisions
 checkCollisions :: State World GameControlEvent
 checkCollisions = do
   -- remove any enemies and bullets that have collided
+  bulletsBefore <- liftM length $ use worldBullets
   bPositions <- liftM (Set.fromList . map (view bulletPosition)) $ use worldBullets
   ePositions <- liftM (Set.fromList . map (view enemyPosition))  $ use worldEnemies
   worldEnemies %= (\es -> [e | e <- es, (e^.enemyPosition)  `Set.notMember` bPositions])
   worldBullets %= (\bs -> [b | b <- bs, (b^.bulletPosition) `Set.notMember` ePositions])
+  bulletsAfter <- liftM length $ use worldBullets
+  worldScore += (bulletsBefore - bulletsAfter)
   -- quit if the player met an enemy
   gets (\w -> if playerCollidedWithEnemy w then GCQuit else GCContinue)
 
 
 spawnBullets :: State World ()
 spawnBullets = do
+  score <- use worldScore
   (x,y) <- use (worldPlayer.playerPosition)
   worldBullets %= (:) (Bullet (x,y-1) (0,-1))
+  when (score > 10) $ do
+    worldBullets %= (:) (Bullet (x-1,y-1) (-1,-1))
+    worldBullets %= (:) (Bullet (x+1,y-1) (1,-1))
 
 spawnEnemy :: State World ()
 spawnEnemy = do
   g <- use worldStdGen
   let (p, g') = randomR (0 :: Int, 100) g
   worldStdGen .= g'
-  when (p>70) $ do
+  when (p>85) $ do
     width <- use worldWidth
     let (x, g'') = randomR (0, width) g'
     worldStdGen .= g''

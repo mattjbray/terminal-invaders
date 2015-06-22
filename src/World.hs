@@ -15,6 +15,8 @@ module World (
   , worldHeight
   , _worldEnemies
   , worldEnemies
+  , _worldScore
+  , worldScore
 )
 
 where
@@ -32,6 +34,7 @@ data World = World { _worldWidth :: Int
                    , _worldEnemies :: [Enemy]
                    , _worldBullets :: [Bullet]
                    , _worldStdGen :: StdGen
+                   , _worldScore :: Int
                    }
 
 makeLenses ''World
