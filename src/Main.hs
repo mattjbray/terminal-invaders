@@ -5,7 +5,7 @@ import Control.Concurrent.Chan (Chan
                                ,newChan
                                ,readChan
                                ,writeChan)
-import Control.Lens ((.=))
+import Control.Lens ((.=),use)
 import Control.Monad (forever)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.State (StateT, evalStateT, gets)
@@ -18,7 +18,7 @@ import Graphics.Vty (Vty
                     ,update)
 import System.Random (newStdGen)
 
-import World (World, worldStdGen)
+import World (World, worldStdGen, worldScore)
 import Render (render)
 import Defaults ()
 import Update (GameControlEvent(GCQuit)
@@ -59,7 +59,9 @@ loop vty gameChan = do
   worldStdGen .= g
   renderS vty
   action <- updateS gameChan
-  case action of GCQuit -> liftIO $ shutdown vty
+  case action of GCQuit -> do liftIO $ shutdown vty
+                              score <- use worldScore
+                              liftIO . putStrLn $ "You died.  Final score: " ++ show score
                  _      -> loop vty gameChan
 
 
